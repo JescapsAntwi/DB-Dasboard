@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -80,7 +80,7 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
   const SidebarLink = ({
     item,
   }: {
-    item: { name: string; icon: React.ComponentType; path: string };
+    item: { name: string; icon: any; path: string };
   }) => {
     return (
       <NavLink
@@ -95,7 +95,7 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
           )
         }
       >
-        {React.createElement(item.icon, { size: 18 })}
+        <item.icon size={18} />
         <span
           className={cn(
             "transition-opacity",
