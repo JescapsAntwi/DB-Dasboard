@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,14 +12,43 @@ import {
   TrendingUp,
   Calendar,
   Award,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface SidebarProps {
   open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
-const DashboardSidebar = ({ open }: SidebarProps) => {
+const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
+  const isMobile = useIsMobile();
+
+  // Close mobile drawer when navigating to a new page
+  useEffect(() => {
+    if (isMobile && open) {
+      const handleRouteChange = () => {
+        setOpen(false);
+      };
+
+      // We'll need to detect navigation events to close the sidebar
+      // This is a simple way to listen for clicks on navigation links
+      const navLinks = document.querySelectorAll("a[href]");
+      navLinks.forEach((link) => {
+        link.addEventListener("click", handleRouteChange);
+      });
+
+      return () => {
+        navLinks.forEach((link) => {
+          link.removeEventListener("click", handleRouteChange);
+        });
+      };
+    }
+  }, [isMobile, open, setOpen]);
+
   const mainMenuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/" },
     { name: "Analytics", icon: BarChart4, path: "/analytics" },
@@ -50,7 +80,7 @@ const DashboardSidebar = ({ open }: SidebarProps) => {
   const SidebarLink = ({
     item,
   }: {
-    item: { name: string; icon: any; path: string };
+    item: { name: string; icon: React.ComponentType; path: string };
   }) => {
     return (
       <NavLink
@@ -65,7 +95,7 @@ const DashboardSidebar = ({ open }: SidebarProps) => {
           )
         }
       >
-        <item.icon size={18} />
+        {React.createElement(item.icon, { size: 18 })}
         <span
           className={cn(
             "transition-opacity",
@@ -104,28 +134,27 @@ const DashboardSidebar = ({ open }: SidebarProps) => {
     );
   };
 
-  return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-sm",
-        "flex flex-col transition-all duration-300 ease-in-out",
-        open ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16"
-      )}
-    >
-      <div className="flex h-16 items-center justify-center border-b px-4">
+  const SidebarContent = () => (
+    <>
+      <div className="flex h-16 items-center justify-between border-b px-4">
         <h1
           className={cn(
             "font-bold text-xl text-humanix-primary flex items-center gap-2",
             open ? "opacity-100" : "opacity-0 md:opacity-100"
           )}
         >
-          <span className="text-humanix-secondary text-2xl">DB</span>
+          <span className="text-humanix-secondary text-2xl">H</span>
           <span
             className={cn("transition-opacity", !open && "hidden md:hidden")}
           >
-            DATABANK
+            HUMANIX
           </span>
         </h1>
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
       <div className="flex-1 overflow-auto p-3">
         <SidebarSection title="Main" items={mainMenuItems} />
@@ -144,10 +173,38 @@ const DashboardSidebar = ({ open }: SidebarProps) => {
             )}
           >
             <div className="text-sm font-medium">Admin User</div>
-            <div className="text-xs text-slate-500">admin@databank.com</div>
+            <div className="text-xs text-slate-500">admin@humanix.io</div>
           </div>
         </div>
       </div>
+    </>
+  );
+
+  // For mobile, use Sheet component
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="left"
+          className="p-0 w-[280px]"
+          onInteractOutside={() => setOpen(false)}
+        >
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // For desktop, use the regular sidebar
+  return (
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-sm",
+        "flex flex-col transition-all duration-300 ease-in-out",
+        open ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16"
+      )}
+    >
+      <SidebarContent />
     </aside>
   );
 };
