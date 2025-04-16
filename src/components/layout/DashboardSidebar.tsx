@@ -19,6 +19,12 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+interface MenuItem {
+  name: string;
+  icon: React.ComponentType<{ size?: number }>;
+  path: string;
+}
+
 interface SidebarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -34,27 +40,29 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
         setOpen(false);
       };
 
-      // We'll need to detect navigation events to close the sidebar
-      // This is a simple way to listen for clicks on navigation links
-      const navLinks = document.querySelectorAll("a[href]");
-      navLinks.forEach((link) => {
-        link.addEventListener("click", handleRouteChange);
-      });
+      // Use event delegation instead of attaching to each link
+      const handleClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const link = target.closest("a[href]");
+        if (link) {
+          handleRouteChange();
+        }
+      };
+
+      document.addEventListener("click", handleClick);
 
       return () => {
-        navLinks.forEach((link) => {
-          link.removeEventListener("click", handleRouteChange);
-        });
+        document.removeEventListener("click", handleClick);
       };
     }
   }, [isMobile, open, setOpen]);
 
-  const mainMenuItems = [
+  const mainMenuItems: MenuItem[] = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/" },
     { name: "Analytics", icon: BarChart4, path: "/analytics" },
   ];
 
-  const humanCapitalItems = [
+  const humanCapitalItems: MenuItem[] = [
     { name: "Employees", icon: Users, path: "/human-capital/employees" },
     { name: "Talent", icon: Award, path: "/human-capital/talent" },
     {
@@ -71,17 +79,13 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
     { name: "Calendar", icon: Calendar, path: "/human-capital/calendar" },
   ];
 
-  const adminItems = [
+  const adminItems: MenuItem[] = [
     { name: "Settings", icon: Settings, path: "/admin/settings" },
     { name: "Security", icon: ShieldCheck, path: "/admin/security" },
     { name: "Reports", icon: FileText, path: "/admin/reports" },
   ];
 
-  const SidebarLink = ({
-    item,
-  }: {
-    item: { name: string; icon: any; path: string };
-  }) => {
+  const SidebarLink = ({ item }: { item: MenuItem }) => {
     return (
       <NavLink
         to={item.path}
@@ -113,7 +117,7 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
     items,
   }: {
     title: string;
-    items: any[];
+    items: MenuItem[];
   }) => {
     return (
       <div className="mb-6">
@@ -151,7 +155,12 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
           </span>
         </h1>
         {isMobile && (
-          <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen(false)}
+            aria-label="Close sidebar"
+          >
             <X className="h-5 w-5" />
           </Button>
         )}
@@ -188,6 +197,7 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
           side="left"
           className="p-0 w-[280px]"
           onInteractOutside={() => setOpen(false)}
+          aria-label="Navigation sidebar"
         >
           <SidebarContent />
         </SheetContent>
@@ -203,6 +213,8 @@ const DashboardSidebar = ({ open, setOpen }: SidebarProps) => {
         "flex flex-col transition-all duration-300 ease-in-out",
         open ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16"
       )}
+      role="navigation"
+      aria-label="Main navigation"
     >
       <SidebarContent />
     </aside>
